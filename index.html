@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vault Game</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .columns {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 1000px;
+    }
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background-color: #222;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 180px;
+    }
+    .card.full-width {
+      min-height: unset;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      margin-bottom: 10px;
+      width: 100%;
+      text-align: center;
+      font-weight: bold;
+    }
+    .btn {
+      background-color: green;
+      color: black;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+    .result {
+      margin-top: 10px;
+      color: #0f0;
+    }
+    .status {
+      color: #0f0;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    .full-width {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .vault-history {
+      margin-top: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 1000px;
+      background-color: #222;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+    }
+    .vault-history h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .vault-history ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .vault-history li {
+      color: #fff;
+      margin-bottom: 5px;
+    }
+    .vault-digit.correct {
+      color: #0f0;
+      font-weight: bold;
+    }
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 0.8em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="card full-width">
+    <button id="actionBtn" class="btn">Pick Action</button>
+    <div id="actionResult" class="result"></div>
+  </div>
+
+  <div class="columns">
+    <!-- Column 1 -->
+    <div class="column">
+      <div class="card">
+        <h3>💡 Get Tip</h3>
+        <button onclick="getTip()" class="btn">Tip</button>
+        <div id="tipResult" class="result"></div>
+      </div>
+      <div class="card">
+        <h3>🏡 Bonus Generator</h3>
+        <input type="text" id="bonusInput" placeholder="Enter win amount">
+        <button onclick="generateBonus()" class="btn">Generate</button>
+        <div id="bonusResult" class="result"></div>
+      </div>
+    </div>
+
+    <!-- Column 2 -->
+    <div class="column">
+      <div class="card">
+        <h3>🎲 Generate Random Number</h3>
+        <button onclick="generateRandomNumber()" class="btn">Generate</button>
+        <div id="randomNumberResult" class="result"></div>
+      </div>
+      <div class="card">
+        <h3>🏱️ Random Prize Picker</h3>
+        <input type="text" id="prizeInput" placeholder="Enter amount">
+        <button onclick="pickPrize()" class="btn">Pick Prize</button>
+        <div id="prizeResult" class="result"></div>
+      </div>
+      <div class="card">
+        <h3>🎯 Wager</h3>
+        <input type="text" id="wagerInput" placeholder="Enter amount">
+        <button onclick="submitWager()" class="btn">Submit</button>
+        <div id="wagerResult" class="result"></div>
+      </div>
+    </div>
+
+    <!-- Column 3 -->
+    <div class="column">
+      <div class="card">
+        <h3>🔐 Set Vault Code</h3>
+        <input type="password" id="setVaultCodeInput" maxlength="5" placeholder="5-digit code">
+        <button onclick="setVaultCode()" class="btn">Set</button>
+        <div id="vaultSetStatus" class="status"></div>
+      </div>
+      <div class="card">
+        <h3>🔐 Try Vault Code</h3>
+        <input type="text" id="tryVaultCodeInput" maxlength="5" placeholder="Enter code">
+        <button onclick="tryVaultCode()" class="btn">Try</button>
+        <div id="vaultResult" class="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vault-history" id="vaultHistorySection" style="display:none;">
+    <h3>Last 5 Vault Attempts</h3>
+    <ul id="vaultHistoryList"></ul>
+  </div>
+
+  <footer>© This software is designed by and owned by Lash3z.</footer>
+
+  <script>
+    let vaultCode = '';
+    let vaultHistory = [];
+
+    function setVaultCode() {
+      vaultCode = document.getElementById('setVaultCodeInput').value;
+      document.getElementById('vaultSetStatus').innerText = 'Vault code set successfully!';
+    }
+
+    function tryVaultCode() {
+      const input = document.getElementById('tryVaultCodeInput').value;
+      let message;
+      if (input === vaultCode) {
+        const jackpot = (Math.random() * 50 + 50).toFixed(2);
+        message = `✅ Correct guess! Jackpot: $${jackpot}`;
+      } else {
+        message = '❌ Incorrect guess';
+      }
+      document.getElementById('vaultResult').innerText = message;
+
+      const displayAttempt = formatVaultAttempt(input);
+      vaultHistory.unshift(displayAttempt);
+      if (vaultHistory.length > 5) vaultHistory.pop();
+      updateVaultHistory();
+    }
+
+    function formatVaultAttempt(input) {
+      let display = '';
+      for (let i = 0; i < input.length; i++) {
+        const char = input[i];
+        if (vaultCode[i] === char) {
+          display += `<span class="vault-digit correct">${char}</span>`;
+        } else {
+          display += char;
+        }
+      }
+      return display;
+    }
+
+    function updateVaultHistory() {
+      const historyList = document.getElementById('vaultHistoryList');
+      historyList.innerHTML = '';
+      vaultHistory.forEach(result => {
+        const li = document.createElement('li');
+        li.innerHTML = result;
+        historyList.appendChild(li);
+      });
+      document.getElementById('vaultHistorySection').style.display = 'block';
+    }
+
+    function getTip() {
+      const tip = (Math.random() * 10).toFixed(2);
+      document.getElementById('tipResult').innerText = `Tip: $${tip}`;
+    }
+
+    function submitWager() {
+      const input = document.getElementById('wagerInput').value;
+      const amount = parseFloat(input);
+      if (isNaN(amount) || amount <= 0) {
+        document.getElementById('wagerResult').innerText = '';
+        return;
+      }
+      const max = 50;
+      const min = amount > 5000 ? 5 : 1;
+      const result = Math.random() < 0.0107 
+        ? max 
+        : (Math.random() * (max - min) + min);
+      document.getElementById('wagerResult').innerText = `Payout: $${result.toFixed(2)}`;
+    }
+
+    function generateBonus() {
+      const input = document.getElementById('bonusInput').value;
+      const amount = parseFloat(input);
+      if (isNaN(amount) || amount <= 0) {
+        document.getElementById('bonusResult').innerText = '';
+        return;
+      }
+
+      let percentage;
+      const roll = Math.random();
+      if (roll < 0.60) {
+        percentage = Math.random() * 0.15 + 0.05;
+      } else if (roll < 0.85) {
+        percentage = Math.random() * 0.10 + 0.20;
+      } else if (roll < 0.99) {
+        percentage = Math.random() * 0.05 + 0.40;
+      } else {
+        percentage = Math.random() * 0.05 + 0.45;
+      }
+
+      const bonus = amount * percentage;
+      const result = Math.max(6, bonus);
+      document.getElementById('bonusResult').innerText = `Bonus: $${result.toFixed(2)}`;
+    }
+
+    function pickPrize() {
+      const input = document.getElementById('prizeInput').value;
+      const amount = parseFloat(input);
+      if (isNaN(amount) || amount <= 0) {
+        document.getElementById('prizeResult').innerText = '';
+        return;
+      }
+      const min = 3;
+      const max = Math.max(5, amount * 0.05);
+      const result = Math.random() < 0.0107 
+        ? max 
+        : (Math.random() * (max - min) + min);
+      document.getElementById('prizeResult').innerText = `Prize: $${result.toFixed(2)}`;
+    }
+
+    function generateRandomNumber() {
+      const num = Math.floor(Math.random() * 1000);
+      document.getElementById('randomNumberResult').innerText = `Generated Number: ${num}`;
+      document.getElementById('prizeInput').value = num;
+    }
+
+    function pickAction() {
+      const actions = [
+        "Can you crack the Vault?",
+        "Get a tip!",
+        "Make a wager!",
+        "Use the bonus generator!",
+        "Pick a random prize!"
+      ];
+      const result = actions[Math.floor(Math.random() * actions.length)];
+      document.getElementById('actionResult').innerText = result;
+    }
+
+    document.getElementById('actionBtn').addEventListener('click', pickAction);
+  </script>
+</body>
+</html>
